@@ -2,6 +2,7 @@ from flask import render_template, Blueprint, request, redirect, url_for, jsonif
 from project import db
 from project.books.models import Book
 from project.books.forms import CreateBook
+from project.security import escape_html_text
 
 
 # Blueprint for books
@@ -23,7 +24,7 @@ def list_books_json():
     # Fetch all books from the database and convert to JSON
     books = Book.query.all()
     # Create a list of dictionaries representing each book with the required fields
-    book_list = [{'name': book.name, 'author': book.author, 'year_published': book.year_published, 'book_type': book.book_type} for book in books]
+    book_list = [{'name': escape_html_text(book.name), 'author': escape_html_text(book.author), 'year_published': book.year_published, 'book_type': book.book_type} for book in books]
     return jsonify(books=book_list)
 
 
@@ -32,7 +33,7 @@ def list_books_json():
 def create_book():
     data = request.get_json()
 
-    new_book = Book(name=data['name'], author=data['author'], year_published=data['year_published'], book_type=data['book_type'])
+    new_book = Book(name=escape_html_text(data['name']), author=escape_html_text(data['author']), year_published=data['year_published'], book_type=data['book_type'])
 
     try:
         # Add the new book to the session and commit to save to the database
@@ -63,8 +64,8 @@ def edit_book(book_id):
         data = request.get_json()
         
         # Update book details
-        book.name = data.get('name', book.name)  # Update if data exists, otherwise keep the same
-        book.author = data.get('author', book.author)
+        book.name = escape_html_text(data.get('name', book.name))  # Update if data exists, otherwise keep the same
+        book.author = escape_html_text(data.get('author', book.author))
         book.year_published = data.get('year_published', book.year_published)
         book.book_type = data.get('book_type', book.book_type)
         
@@ -92,8 +93,8 @@ def get_book_for_edit(book_id):
 
     # Create a dictionary representing the book data
     book_data = {
-        'name': book.name,
-        'author': book.author,
+        'name': escape_html_text(book.name),
+        'author': escape_html_text(book.author),
         'year_published': book.year_published,
         'book_type': book.book_type
     }
@@ -126,12 +127,12 @@ def delete_book(book_id):
 @books.route('/details/<string:book_name>', methods=['GET'])
 def get_book_details(book_name):
         # Find the book by its name
-        book = Book.query.filter_by(name=book_name).first()
+        book = Book.query.filter_by(name=escape_html_text(book_name)).first()
 
         if book:
             book_data = {
-                'name': book.name,
-                'author': book.author,
+                'name': escape_html_text(book.name),
+                'author': escape_html_text(book.author),
                 'year_published': book.year_published,
                 'book_type': book.book_type
             }

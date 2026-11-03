@@ -1,6 +1,7 @@
 from flask import render_template, Blueprint, request, redirect, url_for, jsonify
 from project import db
 from project.customers.models import Customer
+from project.security import escape_html_text
 
 
 # Blueprint for customers
@@ -21,7 +22,7 @@ def list_customers():
 def list_customers_json():
     # Fetch all customers from the database and convert to JSON
     customers = Customer.query.all()
-    customer_list = [{'name': customer.name, 'city': customer.city, 'age': customer.age} for customer in customers]
+    customer_list = [{'name': escape_html_text(customer.name), 'city': escape_html_text(customer.city), 'age': customer.age} for customer in customers]
     return jsonify(customers=customer_list)
 
 
@@ -35,7 +36,7 @@ def create_customer():
         print('Invalid form data')
         return jsonify({'error': 'Invalid form data'}), 400
 
-    new_customer = Customer(name=data['name'], city=data['city'], age=data['age'])
+    new_customer = Customer(name=escape_html_text(data['name']), city=escape_html_text(data['city']), age=data['age'])
 
     try:
         # Add the new customer to the session and commit to save to the database
@@ -59,8 +60,8 @@ def edit_customer_data(customer_id):
     if customer:
         # Convert customer data to a dictionary
         customer_data = {
-            'name': customer.name,
-            'city': customer.city,
+            'name': escape_html_text(customer.name),
+            'city': escape_html_text(customer.city),
             'age': customer.age
         }
         return jsonify({'success': True, 'customer': customer_data}), 200
@@ -85,8 +86,8 @@ def edit_customer(customer_id):
         data = request.form
 
         # Update customer details
-        customer.name = data['name']
-        customer.city = data['city']
+        customer.name = escape_html_text(data['name'])
+        customer.city = escape_html_text(data['city'])
         customer.age = data['age']
 
         # Commit the changes to the database
