@@ -1,5 +1,6 @@
 from flask import render_template, Blueprint, request, redirect, url_for, jsonify
 from project import db
+from project.security import escape_html_text
 from project.loans.models import Loan
 from project.loans.forms import CreateLoan
 from project.books.models import Book
@@ -16,7 +17,7 @@ def list_books_json():
     # Fetch all books from the database
     books = Book.query.all()
     # Create a list of book names
-    book_list = [{'name': book.name} for book in books]
+    book_list = [{'name': escape_html_text(book.name)} for book in books]
     # Return book data in JSON format
     return jsonify({'books': book_list})
 
@@ -28,7 +29,7 @@ def list_customers_json():
     # Fetch all customers from the database
     customers = Customer.query.all()
     # Create a list of customer names
-    customer_list = [{'name': customer.name} for customer in customers]
+    customer_list = [{'name': escape_html_text(customer.name)} for customer in customers]
     # Return customer data in JSON format
     return jsonify({'customers': customer_list})
 
@@ -51,8 +52,8 @@ def create_loan():
     if request.method == 'POST':
         
         # Process form submission
-        customer_name = form.customer_name.data
-        book_name = form.book_name.data
+        customer_name = escape_html_text(form.customer_name.data)
+        book_name = escape_html_text(form.book_name.data)
         loan_date = form.loan_date.data
         return_date = form.return_date.data
 
@@ -103,7 +104,7 @@ def list_loans_json():
     # Fetch all loans from the database
     loans = Loan.query.all()
     # Create a list of loan details
-    loan_list = [{'customer_name': loan.customer_name, 'book_name': loan.book_name,
+    loan_list = [{'customer_name': escape_html_text(loan.customer_name), 'book_name': escape_html_text(loan.book_name),
                   'loan_date': loan.loan_date, 'return_date': loan.return_date} for loan in loans]
     # Return loan data in JSON format
     return jsonify(loans=loan_list)
@@ -113,14 +114,14 @@ def list_loans_json():
 @loans.route('/customers/details/<string:customer_name>', methods=['GET'])
 def get_customer_details(customer_name):
     # Find the customer by their name
-    customer = Customer.query.filter_by(name=customer_name).first()
+    customer = Customer.query.filter_by(name=escape_html_text(customer_name)).first()
 
     if customer:
         # Create a dictionary with customer details
         customer_data = {
             'id': customer.id,
-            'name': customer.name,
-            'city': customer.city,
+            'name': escape_html_text(customer.name),
+            'city': escape_html_text(customer.city),
             'age': customer.age
         }
         # Return customer data in JSON format
@@ -174,8 +175,8 @@ def get_loan_details(loan_id):
         # Create a dictionary with loan details
         loan_data = {
             'id': loan.id,
-            'customer_name': loan.customer_name,
-            'book_name': loan.book_name,
+            'customer_name': escape_html_text(loan.customer_name),
+            'book_name': escape_html_text(loan.book_name),
             'loan_date': loan.loan_date,
             'return_date': loan.return_date
         }
@@ -190,28 +191,28 @@ def get_loan_details(loan_id):
 @loans.route('/books/details/<string:book_name>', methods=['GET'])
 def get_book_details(book_name):
     # Check if the book is in the "loans" database
-    loaned_book = Loan.query.filter_by(book_name=book_name).first()
+    loaned_book = Loan.query.filter_by(book_name=escape_html_text(book_name)).first()
 
     if loaned_book:
         # Book is in "loans" database, return its details
         book_data = {
             'id': loaned_book.id,
-            'name': loaned_book.book_name,
-            'author': loaned_book.original_author,
+            'name': escape_html_text(loaned_book.book_name),
+            'author': escape_html_text(loaned_book.original_author),
             'year_published': loaned_book.original_year_published,
             'book_type': loaned_book.original_book_type
         }
         return jsonify(book=book_data)
     else:
         # Book not found in "loans" database, proceed to check "books" database
-        book = Book.query.filter_by(name=book_name).first()
+        book = Book.query.filter_by(name=escape_html_text(book_name)).first()
 
         if book:
             # Book found in "books" database, return its details
             book_data = {
                 'id': book.id,
-                'name': book.name,
-                'author': book.author,
+                'name': escape_html_text(book.name),
+                'author': escape_html_text(book.author),
                 'year_published': book.year_published,
                 'book_type': book.book_type
             }
